@@ -16,9 +16,9 @@ Two people work on the frontend. They do NOT touch each other's components.
 | `chat/ChatTerminal.jsx` | AI chat panel — message list, input bar, typing indicator |
 | `chat/ChatMessage.jsx` | Single chat message renderer (markdown, code blocks, inline code) |
 
-Also owns: `pages/SessionPage.jsx`, `hooks/useSession.jsx`, `hooks/useTimer.js`, `api/client.js`, `components/game/LandingScreen.jsx`
+Also owns: `pages/SessionPage.jsx`, `pages/DemoPage.jsx`, `pages/ProblemsPage.jsx`, `hooks/useSession.jsx`, `hooks/useTimer.js`, `api/client.js`, `components/game/LandingScreen.jsx`, `components/game/BriefScreen.jsx`
 
-> **Note on LandingScreen:** it lives in `components/game/` but is owned by **Zidan**, not Josh. It's session flow (start screen, username input), not game UI. Josh does not touch it.
+> **Note on LandingScreen:** it lives in `components/game/` but is owned by **Zidan**, not Josh. It's the marketing landing page (hero, CTA to `/problems`), not game UI. Josh does not touch it.
 
 ### Designer — Game Layer (`components/game/`, except LandingScreen)
 
@@ -45,48 +45,60 @@ Both can use and modify these:
 frontend/src/
   components/
     editor/
-      FileTree.jsx
+      FileTree.jsx       ← dynamic tree from API (no static import)
       CodeEditor.jsx
-      ProblemStatement.jsx
+      ProblemStatement.jsx ← dynamic content from problemData.brief
     chat/
-      ChatTerminal.jsx
+      ChatTerminal.jsx   ← placeholder hint from problemData
       ChatMessage.jsx
     game/
+      LandingScreen.jsx  ← marketing hero, CTA links to /problems
+      BriefScreen.jsx    ← dynamic brief from problemData
       ResultsScreen.jsx
       Leaderboard.jsx
       Badge.jsx
     shared/
       Button.jsx
+      Header.jsx         ← dynamic problem title from problemData
       Timer.jsx
   pages/
+    ProblemsPage.jsx     ← /problems — challenge catalog with cards from API
+    DemoPage.jsx         ← reads problemId from URL, calls selectProblem()
     SessionPage.jsx
     LeaderboardPage.jsx
   api/
-    client.js
+    client.js            ← includes fetchProblems, fetchProblemDetail, fetchProblemFiles
   hooks/
-    useSession.jsx
+    useSession.jsx       ← manages problemId, problemData, problemFiles state
     useTimer.js
-  data/
-    fileTree.js
-    fileContents.js
-  App.jsx
+  App.jsx                ← routes: /, /problems, /demo/:problemId?
   main.jsx
-  index.css
+  index.css              ← includes problems page + challenge card styles
 ```
+
+**Deprecated (no longer imported):**
+- `data/fileTree.js` — file tree now loaded from `GET /problems/{id}/files`
+- `data/fileContents.js` — file contents now loaded from API
 
 ## API Client (`api/client.js`)
 
 All API calls go through `api/client.js`. All endpoints hit the live backend — there are **no mocks**. The base URL defaults to `https://sponge-backend.vercel.app` and can be overridden via `VITE_API_URL`.
 
 ```js
-startSession(username)                                                         // POST /session/start
+// Problem endpoints (all silent: true — degrade gracefully if backend doesn't have them yet)
+fetchProblems()                                                                // GET /problems
+fetchProblemDetail(problemId)                                                  // GET /problems/{id}
+fetchProblemFiles(problemId)                                                   // GET /problems/{id}/files
+
+// Session endpoints
+startSession(username, problemId)                                              // POST /session/start (sends problem_id in body)
 sendPrompt({ session_id, prompt_text, conversation_history, active_file, file_contents })  // POST /prompt
 logEvent({ session_id, event, file, ts })                                      // POST /session/event
 runTests({ session_id, file_contents })                                        // POST /run-tests
 submitSession({ session_id, final_code, username })                            // POST /submit
 ```
 
-Error handling: `safeFetch` wrapper emits errors via `onApiError` subscriber pattern. `logEvent` swallows errors silently (fire-and-forget).
+Error handling: `safeFetch` wrapper emits errors via `onApiError` subscriber pattern. `logEvent` swallows errors silently (fire-and-forget). All `/problems` endpoints use `silent: true` so the landing page and demo page don't show error banners when the backend hasn't been updated yet.
 
 ### Score response shape (from `/submit`)
 
@@ -144,9 +156,11 @@ Body: 'Inter', -apple-system, sans-serif
 Code: 'JetBrains Mono', 'Fira Code', monospace
 ```
 
-## RQ File Tree (hardcoded in `data/fileTree.js`)
+## File Tree (dynamic from API)
 
-The file tree shown in the sidebar. All `rq/` source files are accessible (have content in `fileContents.js`). Test files are visible in the tree but NOT accessible (no content loaded — they appear grayed out). This is intentional: we don't want users reverse-engineering the test suite.
+The file tree shown in the sidebar is loaded from `GET /problems/{id}/files` via `problemFiles.file_tree`. File contents come from the same endpoint via `problemFiles.file_contents`. Test files are visible in the tree but NOT accessible (no content loaded — they appear grayed out). This is intentional: we don't want users reverse-engineering the test suite.
+
+For the RQ problem, the tree looks like:
 
 ```
 rq/
@@ -204,23 +218,39 @@ setup.py
 
 All session state lives in `hooks/useSession.jsx` via React Context:
 
+**Problem state (loaded before session starts):**
+- `problemId` — selected problem ID (e.g. `"rq-delayed-jobs"`)
+- `problemData` — metadata + brief + chat hints (from `fetchProblemDetail`)
+- `problemFiles` — file tree + file contents (from `fetchProblemFiles`)
+- `isProblemLoading` — loading state for `selectProblem()`
+- `selectProblem(id)` — fetches detail + files from API, sets `totalTime` from problem config
+
+**Session state:**
 - `sessionId` — current session ID from backend
-- `view` — `'idle'` | `'session'` | `'results'`
-- `timeLeft` / `totalTime` — countdown timer (60 min)
-- `activeFile` / `openFiles` — editor file state
-- `fileBuffers` — in-memory file contents (initialized from `fileContents.js`)
+- `view` — `'idle'` | `'brief'` | `'session'` | `'results'`
+- `timeLeft` / `totalTime` — countdown timer (from `problemData.time_limit_seconds`)
+- `activeFile` / `openFiles` — editor file state (initialized from `problemData.default_active_file`)
+- `fileBuffers` — in-memory file contents (initialized from `problemFiles.file_contents`)
 - `chatHistory` — array of `{ role, content }` messages
 - `isAiLoading` — whether AI is generating a response
 - `results` — scoring results from submit endpoint
 - `isSubmitting` — loading state for submit
 
+**View flow:** `idle → brief → session → results`. Problem selection happens on the `/problems` page, which navigates to `/demo/:problemId`. DemoPage calls `selectProblem()` on mount, then `beginSession()` once loaded.
+
 ## Key Implementation Notes
 
 - Monaco Editor is used for the code editor (`@monaco-editor/react`)
 - Custom Monaco theme `sponge-dark` matches the design system
-- File contents are hardcoded in `data/fileContents.js` — the editor is read/write but changes only live in memory
+- File contents are loaded dynamically from `GET /problems/{id}/files` — the editor is read/write but changes only live in memory
 - The chat panel renders markdown (code blocks, inline code, bold, bullets) with a custom renderer
+- Chat placeholder hint comes from `problemData.brief.chat_placeholder_hint`
 - Events are logged to the backend via `logEvent()` for scoring analysis
+- `/problems` route — dedicated page listing all challenges; fetches from `GET /problems`, renders challenge cards
+- Landing page CTA ("Browse challenges") navigates to `/problems`
+- `/demo/:problemId?` route — `problemId` param is optional, defaults to `"rq-delayed-jobs"`
+- BriefScreen and ProblemStatement render all content from `problemData.brief` (title, context, objective, requirements, constraints, footer_note)
+- Header shows `problemData.short_title` instead of hardcoded text
 
 ## Context Sync Reminder
 

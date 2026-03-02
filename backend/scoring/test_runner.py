@@ -132,10 +132,11 @@ def _run_tests_sync(
         env[env_var_name] = source_copy
         runtime_paths = os.pathsep.join(p for p in sys.path if p)
 
-        # Build extra paths from config (resolve relative to source_copy)
+        # Build extra paths from config (resolve relative to tmpdir — the sandbox root)
+        # e.g. "source" → /tmp/.../source (where rq/ package lives)
         resolved_extra = []
         for ep in extra_python_paths:
-            resolved_extra.append(os.path.join(source_copy, ep) if not os.path.isabs(ep) else ep)
+            resolved_extra.append(os.path.join(tmpdir, ep) if not os.path.isabs(ep) else ep)
         if not resolved_extra:
             resolved_extra = [source_copy, os.path.join(source_copy, "tests")]
         extra = os.pathsep.join(resolved_extra)

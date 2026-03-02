@@ -9,15 +9,61 @@ Read `AGENTS.md` first for full project context. This file is backend-specific.
 - **Storage**: In-memory for hackathon (dict-based session store)
 - **Python**: 3.10+
 
+## Problem Registry (`problems/`)
+
+The problem registry discovers and caches all problems at startup. Each problem is a directory under `backend/problems/` containing a `manifest.json`.
+
+| File | Purpose |
+|------|---------|
+| `problems/registry.py` | `load_all_problems()`, `get_problem(id)`, `list_problems()` — loads manifests, prompts, source files, frontend JSON |
+| `problems/<id>/manifest.json` | Central config: metadata, test runner config, prompt file paths, frontend file paths |
+| `problems/<id>/source/` | The codebase users work in (read at startup into `file_contents` dict) |
+| `problems/<id>/prompts/` | `.txt` files for system, eval, code_eval, insights prompts |
+| `problems/<id>/tests/` | conftest_template, visible + hidden test files |
+| `problems/<id>/frontend/` | `brief.json`, `file_tree.json`, `chat_hints.json` |
+
+The registry loads at startup via `@app.on_event("startup")` in `main.py`. All modules access problem data via `get_problem(problem_id)` — no hardcoded paths or prompts remain.
+
+### `Problem` object properties
+- `system_prompt`, `eval_prompt`, `code_eval_prompt`, `insights_prompt` — convenience accessors into `self.prompts`
+- `source_path` — resolved absolute path to source directory
+- `file_contents` — dict of `{relative_path: content}` for all source files
+- `file_tree`, `brief`, `chat_hints` — loaded frontend JSON
+
 ## API Endpoints
 
 All endpoints are defined in `routes/`. Each route file handles one endpoint group.
 
-### `POST /session/start` (`routes/session.py`)
+### `GET /problems` (`routes/problems.py`)
 
-Creates a new session. Generates a session ID, initializes session storage.
+Returns the problem catalog for the frontend landing page.
 
 ```json
+// Response
+[{ "id": "rq-delayed-jobs", "title": "Add Delayed Job Execution", "short_title": "Delayed Job Execution", "language": "python", "difficulty": "intermediate", "time_limit_seconds": 3600, "description": "..." }]
+```
+
+### `GET /problems/{id}` (`routes/problems.py`)
+
+Returns full problem metadata + brief + chat hints + config.
+
+### `GET /problems/{id}/files` (`routes/problems.py`)
+
+Returns file tree and file contents for a problem.
+
+```json
+// Response
+{ "file_tree": [...], "file_contents": { "rq/queue.py": "...", ... } }
+```
+
+### `POST /session/start` (`routes/session.py`)
+
+Creates a new session. Accepts `problem_id` (defaults to `"rq-delayed-jobs"`). Validates the problem exists in the registry.
+
+```json
+// Request
+{ "username": "alice", "problem_id": "rq-delayed-jobs" }
+
 // Response
 { "session_id": "sponge_abc123" }
 ```
@@ -41,10 +87,12 @@ Forwards user prompt to Gemini API with conversation history. Returns AI respons
 { "response_text": "Looking at rq/worker.py..." }
 ```
 
-The Gemini client lives in `gemini/client.py`. It should:
-- Take a system prompt that gives the AI context about RQ and the task
-- Forward the conversation history
-- Return the response text
+The Gemini client lives in `gemini/client.py`. It:
+- Accepts an optional `system_prompt` parameter (loaded from problem registry)
+- Forwards the conversation history
+- Returns the response text
+
+The prompt route (`routes/prompt.py`) looks up `problem.system_prompt` from the registry and passes it to `call_gemini()`.
 
 ### `POST /session/event` (`routes/session.py`)
 
@@ -72,12 +120,14 @@ Store all events in the session object. The scoring engine reads them later.
 
 ### `POST /submit` (`routes/submit.py`)
 
-Submits session for scoring. Fires three concurrent evaluations then runs `compute_score()`:
-1. `evaluate_conversation()` — semantic eval of conversation via Gemini (12 sub-criteria)
-2. `analyze_final_code()` — code quality analysis via Gemini (B1/B2/B3 + P3)
-3. `run_correctness_tests()` — 12 synthesized tests in sandbox
+Submits session for scoring. Looks up `session.problem_id` from registry, then fires three concurrent evaluations with problem-specific prompts:
+1. `evaluate_conversation(eval_prompt=problem.eval_prompt)` — semantic eval via Gemini (12 sub-criteria)
+2. `analyze_final_code(code_eval_prompt=problem.code_eval_prompt)` — code quality via Gemini (B1/B2/B3 + P3)
+3. `run_correctness_tests(problem_id=session.problem_id)` — tests in sandbox using problem-specific config
 
-All three return `None` on failure — the engine falls back to metric-based scoring.
+A fourth step runs after scoring: `generate_insights(insights_prompt=problem.insights_prompt)`.
+
+All evals return `None` on failure — the engine falls back to metric-based scoring.
 
 ```json
 // Request
@@ -109,7 +159,7 @@ All three return `None` on failure — the engine falls back to metric-based sco
 
 ### `POST /run-tests` (`routes/run_tests.py`)
 
-Runs the correctness test suite against the user's current code. Returns pass/fail results.
+Runs the correctness test suite against the user's current code. Looks up `session.problem_id` and passes it to the test runner which reads all config (source path, conftest template, test files, timeout, env vars) from the registry. Returns pass/fail results.
 
 ```json
 // Request
@@ -125,12 +175,12 @@ Runs the correctness test suite against the user's current code. Returns pass/fa
 
 ### `GET /leaderboard` (`routes/leaderboard.py`)
 
-Returns all completed sessions sorted by score.
+Returns all completed sessions sorted by score. Supports optional `?problem_id=` query parameter to filter by problem.
 
 ```json
 // Response
 [
-  { "username": "zidan", "score": 85, "time_completed": "2024-03-01T12:34:56Z", "badge": "AI Collaborator" }
+  { "username": "zidan", "score": 85, "time_completed": "2024-03-01T12:34:56Z", "badge": "AI Collaborator", "problem_id": "rq-delayed-jobs" }
 ]
 ```
 
@@ -145,7 +195,8 @@ Returns all completed sessions sorted by score.
     "conversation_history": [{"role": str, "content": str}],
     "final_code": str | None,
     "score": Score | None,
-    "username": str | None
+    "username": str | None,
+    "problem_id": str  # defaults to "rq-delayed-jobs"
 }
 ```
 
@@ -192,11 +243,11 @@ The scoring engine is fully implemented. Key files:
 | File | Purpose |
 |------|---------|
 | `scoring/engine.py` | Main `compute_score()` — orchestrates all scoring, produces the `Score` model |
-| `scoring/semantic.py` | `evaluate_conversation()` — Gemini-based semantic eval of 12 sub-criteria |
-| `scoring/code_analysis.py` | `analyze_final_code()` — Gemini-based code quality eval (B1/B2/B3 + P3) |
-| `scoring/test_runner.py` | `run_correctness_tests()` — runs 12 synthesized tests against user code |
+| `scoring/semantic.py` | `evaluate_conversation(eval_prompt=)` — Gemini-based semantic eval of 12 sub-criteria |
+| `scoring/code_analysis.py` | `analyze_final_code(code_eval_prompt=)` — Gemini-based code quality eval (B1/B2/B3 + P3) |
+| `scoring/test_runner.py` | `run_correctness_tests(problem_id=)` — runs tests from problem registry config |
 | `scoring/metrics.py` | Metric computation from event log (rates, timing) |
-| `scoring/insights.py` | `generate_insights()` — Gemini-powered personalised insights (strengths + improvements) |
+| `scoring/insights.py` | `generate_insights(insights_prompt=)` — Gemini-powered personalised insights |
 | `scoring/vocabulary.py` | Badge assignment from total score |
 
 The engine uses three evaluation sources (all fired concurrently, all fallback to `None`):
@@ -208,14 +259,14 @@ The engine uses three evaluation sources (all fired concurrently, all fallback t
 
 ## Gemini Integration (`gemini/client.py`)
 
-The Gemini client wraps the Google Generative AI API. It should:
+The Gemini client wraps the Google Generative AI API (`google-genai` package). It:
 
-1. Accept a system prompt (context about RQ, the task, guidelines for the AI assistant)
-2. Accept conversation history
-3. Return the AI response text
-4. Handle errors gracefully
+1. Accepts an optional `system_prompt` parameter (loaded per-problem from registry)
+2. Accepts conversation history
+3. Returns the AI response text
+4. Handles errors gracefully
 
-The API key should come from an environment variable: `GEMINI_API_KEY`.
+Uses `genai.Client(api_key=...)` with native async via `client.aio.models.generate_content()`. Model: `gemini-2.5-flash`. API key from env var `GEMINI_API_KEY`.
 
 ## Session Storage
 

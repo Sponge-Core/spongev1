@@ -8,13 +8,29 @@ Sponge is a gamified AI-assisted coding interview practice platform, built for t
 
 The pitch: we've gamified the coding interview prep experience. Score system, leaderboard, progression, competitive.
 
-## The Interview Task
+## Multi-Problem Platform
 
-Users are dropped into a real Python job queue library (RQ — Redis Queue). The task:
+Sponge supports multiple interview problems. Each problem is a self-contained package under `backend/problems/<problem-id>/` with its own manifest, prompts, tests, source files, and frontend JSON. The backend discovers all problems at startup via a **problem registry** (`backend/problems/registry.py`).
 
-> **Add Delayed Job Execution** — extend RQ so jobs can be scheduled to run at a specific time in the future. Add `enqueue_in(seconds, func, *args, **kwargs)` and `enqueue_at(datetime, func, *args, **kwargs)` to the Queue class. A job scheduled for time T must not execute before T. A job scheduled in the past should run immediately. All existing behavior must continue to work.
+### Current Problems
 
-The codebase lives at `rq-v1.0/` in the repo root. Do not modify it.
+| ID | Title | Language | Difficulty | Time Limit |
+|----|-------|----------|------------|------------|
+| `rq-delayed-jobs` | Add Delayed Job Execution | Python | Intermediate | 60 min |
+
+### Problem Structure
+
+Each problem directory contains:
+```
+backend/problems/<problem-id>/
+  manifest.json          # metadata, test config, prompt/frontend file paths
+  source/                # the codebase users work in (symlink or directory)
+  prompts/               # system, eval, code_eval, insights prompt .txt files
+  tests/                 # conftest_template, visible + hidden test files
+  frontend/              # brief.json, file_tree.json, chat_hints.json
+```
+
+The RQ source codebase lives at `rq-v1.0/` in the repo root (symlinked from `backend/problems/rq-delayed-jobs/source`). Do not modify it.
 
 ## Stack
 
@@ -40,12 +56,34 @@ The codebase lives at `rq-v1.0/` in the repo root. Do not modify it.
 
 This is the shared interface between frontend and backend. Both sides implement to this spec.
 
+### `GET /problems` (NEW)
+Returns the problem catalog.
+```json
+// Response
+[{ "id": "rq-delayed-jobs", "title": "Add Delayed Job Execution", "short_title": "Delayed Job Execution", "language": "python", "difficulty": "intermediate", "time_limit_seconds": 3600, "description": "..." }]
+```
+
+### `GET /problems/{id}` (NEW)
+Returns full problem metadata including brief JSON, chat hints, and config.
+
+### `GET /problems/{id}/files` (NEW)
+Returns the file tree and file contents for a problem.
+```json
+// Response
+{ "file_tree": [...], "file_contents": { "rq/queue.py": "...", ... } }
+```
+
 ### `POST /session/start`
 Starts a new interview session.
 ```json
+// Request
+{ "username": "alice", "problem_id": "rq-delayed-jobs" }
+
 // Response
 { "session_id": "sponge_abc123" }
 ```
+
+`problem_id` defaults to `"rq-delayed-jobs"` if omitted (backward compatible).
 
 ### `POST /prompt`
 Sends a user prompt to the AI assistant with codebase context.
@@ -148,12 +186,12 @@ Submits the session for scoring. Fires three concurrent evaluations (semantic, c
 **Note:** `rubric_breakdown`, `sub_criteria`, `penalty_detail`, `test_suite`, and `insights` are optional and may be null if the corresponding eval failed.
 
 ### `GET /leaderboard`
-Returns the leaderboard.
+Returns the leaderboard. Supports optional `?problem_id=` query parameter to filter by problem.
 ```json
 // Response
 [
-  { "username": "zidan", "score": 85, "time_completed": "2024-03-01T12:34:56Z", "badge": "AI Collaborator" },
-  { "username": "alice", "score": 72, "time_completed": "2024-03-01T13:00:00Z", "badge": "On Your Way" }
+  { "username": "zidan", "score": 85, "time_completed": "2024-03-01T12:34:56Z", "badge": "AI Collaborator", "problem_id": "rq-delayed-jobs" },
+  { "username": "alice", "score": 72, "time_completed": "2024-03-01T13:00:00Z", "badge": "On Your Way", "problem_id": "rq-delayed-jobs" }
 ]
 ```
 
@@ -207,7 +245,10 @@ Four categories with 16 sub-criteria, scored via Gemini semantic eval + code ana
 sponge/
   frontend/          ← React + Vite
   backend/           ← FastAPI + Python
-  rq-v1.0/           ← The codebase users work in (DO NOT MODIFY)
+    problems/        ← Problem registry (manifest, prompts, tests, frontend JSON per problem)
+      registry.py    ← Discovery + caching logic
+      rq-delayed-jobs/
+  rq-v1.0/           ← RQ source codebase (DO NOT MODIFY)
   README.md
   AGENTS.md          ← This file
   FRONTEND_AGENTS.md ← Frontend-specific context
