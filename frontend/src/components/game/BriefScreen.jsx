@@ -9,8 +9,9 @@ function formatTime(seconds) {
 
 export default function BriefScreen() {
   const navigate = useNavigate()
-  const { timeLeft, totalTime, startCoding } = useSession()
+  const { timeLeft, totalTime, startCoding, problemData } = useSession()
 
+  const brief = problemData?.brief || {}
   const pct = (timeLeft / totalTime) * 100
   const timerClass = timeLeft <= 10 ? 'timer--critical' : timeLeft <= 60 ? 'timer--urgent' : ''
 
@@ -45,15 +46,11 @@ export default function BriefScreen() {
         </div>
 
         <h1 className="brief-title">
-          Add Delayed Job Execution
+          {brief.title || 'Challenge'}
         </h1>
 
         <p className="brief-desc">
-          RQ is a Python job queue backed by Redis. Producers enqueue jobs onto
-          named queues. Workers run in separate processes — each worker
-          continuously pulls the next available job off a queue and executes it.
-          When a job finishes or fails, it moves into a registry. Right now,
-          every enqueued job is eligible to run immediately.
+          {brief.context || ''}
         </p>
 
         <div className="brief-divider" />
@@ -63,37 +60,41 @@ export default function BriefScreen() {
           <section className="brief-col">
             <h2 className="brief-section-label">Objective</h2>
             <p className="brief-section-text">
-              Extend RQ so jobs can be scheduled to run at a specific time in the future.
+              {brief.objective || ''}
             </p>
 
-            <h2 className="brief-section-label brief-section-label--spaced">Requirements</h2>
-            <div className="brief-req">
-              <div className="brief-req-row">
-                <span className="brief-req-num">1</span>
-                <span className="brief-req-text">
-                  Add <code>enqueue_in(seconds, func, *args, **kwargs)</code> to <code>Queue</code>
-                </span>
-              </div>
-              <div className="brief-req-row">
-                <span className="brief-req-num">2</span>
-                <span className="brief-req-text">
-                  Add <code>enqueue_at(datetime, func, *args, **kwargs)</code> to <code>Queue</code>
-                </span>
-              </div>
-            </div>
+            {brief.requirements?.length > 0 && (
+              <>
+                <h2 className="brief-section-label brief-section-label--spaced">Requirements</h2>
+                <div className="brief-req">
+                  {brief.requirements.map((req, i) => (
+                    <div key={i} className="brief-req-row">
+                      <span className="brief-req-num">{i + 1}</span>
+                      <span className="brief-req-text" dangerouslySetInnerHTML={{ __html: req }} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </section>
 
           <section className="brief-col">
-            <h2 className="brief-section-label">Constraints</h2>
-            <ul className="brief-constraints">
-              <li>A job scheduled for time <em>T</em> must not execute before <em>T</em></li>
-              <li>A job scheduled in the past should be treated as immediately ready</li>
-              <li>All existing behavior must continue to work unchanged</li>
-            </ul>
+            {brief.constraints?.length > 0 && (
+              <>
+                <h2 className="brief-section-label">Constraints</h2>
+                <ul className="brief-constraints">
+                  {brief.constraints.map((c, i) => (
+                    <li key={i} dangerouslySetInnerHTML={{ __html: c }} />
+                  ))}
+                </ul>
+              </>
+            )}
 
-            <div className="brief-note">
-              60 min &mdash; Use the AI as a collaborator, not a crutch.
-            </div>
+            {brief.footer_note && (
+              <div className="brief-note">
+                {brief.footer_note}
+              </div>
+            )}
           </section>
 
         </div>

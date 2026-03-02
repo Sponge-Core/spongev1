@@ -1,18 +1,18 @@
 import { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react'
-import { startSession, sendPrompt, logEvent, submitSession, runTests as apiRunTests, emitError } from '../api/client'
-import fileContents from '../data/fileContents'
+import { startSession, sendPrompt, logEvent, submitSession, runTests as apiRunTests, emitError, fetchProblemDetail, fetchProblemFiles } from '../api/client'
 
 const SessionContext = createContext(null)
 
-const TOTAL_TIME = 60 * 60 // 60 minutes in seconds
+const DEFAULT_TOTAL_TIME = 60 * 60 // 60 minutes in seconds
 
 export function SessionProvider({ children }) {
   const [sessionId, setSessionId] = useState(null)
   const [view, setView] = useState('idle') // idle | brief | session | results
-  const [timeLeft, setTimeLeft] = useState(TOTAL_TIME)
-  const [activeFile, setActiveFile] = useState('rq/job.py')
-  const [openFiles, setOpenFiles] = useState(['rq/job.py'])
-  const [fileBuffers, setFileBuffers] = useState(() => ({ ...fileContents }))
+  const [timeLeft, setTimeLeft] = useState(DEFAULT_TOTAL_TIME)
+  const [totalTime, setTotalTime] = useState(DEFAULT_TOTAL_TIME)
+  const [activeFile, setActiveFile] = useState(null)
+  const [openFiles, setOpenFiles] = useState([])
+  const [fileBuffers, setFileBuffers] = useState({})
   const [chatHistory, setChatHistory] = useState([])
   const [isAiLoading, setIsAiLoading] = useState(false)
   const [results, setResults] = useState(null)
@@ -20,9 +20,16 @@ export function SessionProvider({ children }) {
   const [username, setUsername] = useState('Anonymous')
   const [checkpoints, setCheckpoints] = useState([])
   const [showHistory, setShowHistory] = useState(false)
-  const [lastSavedBuffers, setLastSavedBuffers] = useState(() => ({ ...fileContents }))
+  const [lastSavedBuffers, setLastSavedBuffers] = useState({})
   const [testResults, setTestResults] = useState(null)
   const [isRunningTests, setIsRunningTests] = useState(false)
+
+  // Problem data — loaded dynamically from API
+  const [problemId, setProblemId] = useState(null)
+  const [problemData, setProblemData] = useState(null)      // metadata + brief + chat_hints
+  const [problemFiles, setProblemFiles] = useState(null)     // file_tree + file_contents
+  const [isProblemLoading, setIsProblemLoading] = useState(false)
+
   const timerRef = useRef(null)
   const editDebounceRef = useRef(null)
   const chatHistoryRef = useRef(chatHistory)
@@ -32,6 +39,26 @@ export function SessionProvider({ children }) {
   const fileBuffersRef = useRef(fileBuffers)
   fileBuffersRef.current = fileBuffers
   const submittingRef = useRef(false)
+
+  // Load problem data from API
+  const selectProblem = useCallback(async (id) => {
+    if (!id) return
+    setIsProblemLoading(true)
+    try {
+      const [detail, files] = await Promise.all([
+        fetchProblemDetail(id),
+        fetchProblemFiles(id),
+      ])
+      setProblemId(id)
+      setProblemData(detail)
+      setProblemFiles(files)
+      setTotalTime(detail.time_limit_seconds || DEFAULT_TOTAL_TIME)
+    } catch (err) {
+      throw err
+    } finally {
+      setIsProblemLoading(false)
+    }
+  }, [])
 
   // Start countdown timer on brief + session screens
   useEffect(() => {
@@ -53,21 +80,27 @@ export function SessionProvider({ children }) {
     const resolvedName = name && name.trim() ? name.trim() : 'Anonymous'
     setUsername(resolvedName)
     try {
-      const { session_id } = await startSession(resolvedName)
+      const { session_id } = await startSession(resolvedName, problemId)
       setSessionId(session_id)
       setView('brief')
-      setTimeLeft(TOTAL_TIME)
+      const t = problemData?.time_limit_seconds || DEFAULT_TOTAL_TIME
+      setTotalTime(t)
+      setTimeLeft(t)
       setChatHistory([])
       setResults(null)
-      setActiveFile('rq/job.py')
-      setOpenFiles(['rq/job.py'])
-      setFileBuffers({ ...fileContents })
+
+      // Initialize file state from loaded problem data
+      const contents = problemFiles?.file_contents || {}
+      const defaultFile = problemData?.default_active_file || Object.keys(contents)[0] || null
+      setActiveFile(defaultFile)
+      setOpenFiles(defaultFile ? [defaultFile] : [])
+      setFileBuffers({ ...contents })
+      setLastSavedBuffers({ ...contents })
     } catch (err) {
-      // ErrorBanner already showing via onApiError — stay on landing screen
       setUsername('')
       throw err
     }
-  }, [])
+  }, [problemId, problemData, problemFiles])
 
   const startCoding = useCallback(() => {
     setView('session')
@@ -111,8 +144,12 @@ export function SessionProvider({ children }) {
     const cp = checkpoints.find((c) => c.id === id)
     if (!cp) return
     setFileBuffers({ ...cp.buffers })
-    setActiveFile((prev) => (cp.buffers[prev] !== undefined ? prev : 'rq/queue.py'))
-  }, [checkpoints])
+    setActiveFile((prev) => {
+      if (cp.buffers[prev] !== undefined) return prev
+      const defaultFile = problemData?.default_active_file
+      return defaultFile && cp.buffers[defaultFile] !== undefined ? defaultFile : Object.keys(cp.buffers)[0] || null
+    })
+  }, [checkpoints, problemData])
 
   const sendChat = useCallback(async (text) => {
     const userMsg = { role: 'user', content: text }
@@ -132,8 +169,6 @@ export function SessionProvider({ children }) {
       const aiMsg = { role: 'assistant', content: response_text }
       setChatHistory((prev) => [...prev, aiMsg])
     } catch {
-      // Error already emitted via onApiError — add a non-assistant marker
-      // so this doesn't pollute conversation_history sent to the API
       setChatHistory((prev) => [
         ...prev,
         { role: 'error', content: 'Something went wrong. Try again.' },
@@ -209,8 +244,8 @@ export function SessionProvider({ children }) {
     setSessionId(null)
     setResults(null)
     setChatHistory([])
-    setTimeLeft(TOTAL_TIME)
-  }, [])
+    setTimeLeft(totalTime)
+  }, [totalTime])
 
   return (
     <SessionContext.Provider
@@ -219,7 +254,7 @@ export function SessionProvider({ children }) {
         view,
         setView,
         timeLeft,
-        totalTime: TOTAL_TIME,
+        totalTime,
         activeFile,
         openFiles,
         fileBuffers,
@@ -234,6 +269,13 @@ export function SessionProvider({ children }) {
         isRunningTests,
         showHistory,
         setShowHistory,
+        // Problem data
+        problemId,
+        problemData,
+        problemFiles,
+        isProblemLoading,
+        selectProblem,
+        // Actions
         beginSession,
         startCoding,
         openFile,

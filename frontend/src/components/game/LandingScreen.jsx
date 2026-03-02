@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { fetchProblems } from '../../api/client'
 import '@fontsource/newsreader/400.css'
 import '@fontsource/newsreader/400-italic.css'
 
@@ -201,9 +202,56 @@ function TeamNameReveal({ name, containerRef, staggerIndex = 0 }) {
   )
 }
 
+function ChallengeCard({ problem, onClick }) {
+  const langColors = { python: '#3776AB' }
+  const diffColors = { beginner: '#52b788', intermediate: '#e9c46a', advanced: '#e76f51' }
+
+  return (
+    <div className="challenge-card" onClick={onClick}>
+      <div className="challenge-card-top">
+        <span
+          className="challenge-card-lang"
+          style={{ background: langColors[problem.language] || '#666' }}
+        >
+          {problem.language}
+        </span>
+        <span
+          className="challenge-card-diff"
+          style={{ color: diffColors[problem.difficulty] || 'var(--text-dim)' }}
+        >
+          {problem.difficulty}
+        </span>
+      </div>
+      <h3 className="challenge-card-title">{problem.title}</h3>
+      <p className="challenge-card-desc">{problem.description}</p>
+      <div className="challenge-card-footer">
+        <span className="challenge-card-time">
+          {Math.floor(problem.time_limit_seconds / 60)} min
+        </span>
+        <span className="challenge-card-arrow">&rarr;</span>
+      </div>
+    </div>
+  )
+}
+
+function ComingSoonCard() {
+  return (
+    <div className="challenge-card challenge-card--soon">
+      <div className="challenge-card-top">
+        <span className="challenge-card-lang" style={{ background: '#444' }}>coming soon</span>
+      </div>
+      <h3 className="challenge-card-title" style={{ opacity: 0.4 }}>More challenges on the way</h3>
+      <p className="challenge-card-desc" style={{ opacity: 0.3 }}>
+        New problems are being added regularly. Stay tuned.
+      </p>
+    </div>
+  )
+}
+
 export default function LandingScreen() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [problems, setProblems] = useState([])
 
   // Typing effect state
   const [wordIndex, setWordIndex] = useState(0)
@@ -218,6 +266,13 @@ export default function LandingScreen() {
   const mascot2Ref = useRef(null)
   const mascot3Ref = useRef(null)
   const mascot4Ref = useRef(null)
+
+  // Fetch available problems on mount
+  useEffect(() => {
+    fetchProblems()
+      .then(setProblems)
+      .catch(() => {}) // silent — cards just won't show
+  }, [])
 
   useEffect(() => {
     let timeout
@@ -378,6 +433,26 @@ export default function LandingScreen() {
         </div>
 
       </div>
+
+      {/* ── Challenges section ── */}
+      {problems.length > 0 && (
+        <div className="challenges-section">
+          <p className="challenges-label">CHALLENGES</p>
+          <div className="challenges-grid">
+            {problems.map((p) => (
+              <ChallengeCard
+                key={p.id}
+                problem={p}
+                onClick={() => {
+                  setLoading(true)
+                  setTimeout(() => navigate(`/demo/${p.id}`), 400)
+                }}
+              />
+            ))}
+            <ComingSoonCard />
+          </div>
+        </div>
+      )}
 
       {/* ── Second viewport: Team Credits ── */}
       <div className="landing-section" ref={teamRef}>

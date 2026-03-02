@@ -1,0 +1,16 @@
+{
+  "title": "Add Delayed Job Execution",
+  "context": "RQ is a Python job queue backed by Redis. Producers enqueue jobs onto named queues. Workers run in separate processes \u2014 each worker continuously pulls the next available job off a queue and executes it. When a job finishes or fails, it moves into a registry. Right now, every enqueued job is eligible to run immediately.",
+  "objective": "Extend RQ so jobs can be scheduled to run at a specific time in the future.",
+  "requirements": [
+    "Add <code>enqueue_in(seconds, func, *args, **kwargs)</code> to <code>Queue</code>",
+    "Add <code>enqueue_at(datetime, func, *args, **kwargs)</code> to <code>Queue</code>"
+  ],
+  "constraints": [
+    "A job scheduled for time <em>T</em> must not execute before <em>T</em>",
+    "A job scheduled in the past should be treated as immediately ready",
+    "All existing behavior must continue to work unchanged"
+  ],
+  "footer_note": "60 min \u2014 Use the AI as a collaborator, not a crutch.",
+  "chat_placeholder_hint": "How should I approach adding delayed job execution?"
+}

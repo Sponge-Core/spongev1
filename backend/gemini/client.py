@@ -26,7 +26,6 @@ from google.genai import types
 
 from gemini.config import GEMINI_MODEL_CHAIN
 from gemini.fallback import generate_with_fallback
-from .system_prompt import SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -66,9 +65,9 @@ def _get_client() -> Optional[genai.Client]:
 
 # ─── Generation config ─────────────────────────────────────────────────
 
-def _make_config() -> types.GenerateContentConfig:
+def _make_config(system_prompt: str) -> types.GenerateContentConfig:
     return types.GenerateContentConfig(
-        system_instruction=SYSTEM_PROMPT,
+        system_instruction=system_prompt,
         max_output_tokens=MAX_OUTPUT_TOKENS,
         temperature=0.4,
         safety_settings=[
@@ -233,6 +232,7 @@ async def call_gemini(
     conversation_history: list[dict],
     active_file: Optional[str] = None,
     file_contents: Optional[dict[str, str]] = None,
+    system_prompt: Optional[str] = None,
 ) -> str:
     """
     Send a prompt to Gemini with codebase context and conversation history.
@@ -258,7 +258,7 @@ async def call_gemini(
             generate_with_fallback(
                 client,
                 contents=contents,
-                config=_make_config(),
+                config=_make_config(system_prompt or "You are a helpful AI coding assistant."),
             ),
             timeout=GEMINI_TIMEOUT_S,
         )

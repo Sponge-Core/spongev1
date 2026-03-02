@@ -12,7 +12,8 @@ from pydantic import BaseModel
 import store
 from models.score import TestSuiteResult
 from models.session import Session
-from scoring.test_runner import run_correctness_tests_verbose, RQ_SOURCE, BACKEND_ROOT
+from scoring.test_runner import run_correctness_tests_verbose
+from problems.registry import get_problem
 
 router = APIRouter(tags=["run-tests"])
 
@@ -36,7 +37,9 @@ async def run_tests(body: RunTestsRequest):
         store.sessions[body.session_id] = session
 
     try:
-        return await run_correctness_tests_verbose(body.file_contents)
+        return await run_correctness_tests_verbose(
+            body.file_contents, problem_id=session.problem_id,
+        )
     except Exception as e:
         tb = traceback.format_exc()
         return {
@@ -47,16 +50,19 @@ async def run_tests(body: RunTestsRequest):
 
 @router.get("/run-tests/debug")
 async def debug_test_runner():
-    """Temporary debug endpoint — runs actual test flow and reports errors."""
+    """Temporary debug endpoint — runs actual test flow using registry and reports errors."""
     import tempfile
-    from scoring.test_runner import (
-        parse_final_code, CONFTEST_CONTENT, TEST_SUITE_PATH, PYTEST_TIMEOUT,
-    )
+    from scoring.test_runner import parse_final_code
 
+    problem = get_problem("rq-delayed-jobs")
+    if problem is None:
+        return {"error": "Problem 'rq-delayed-jobs' not found in registry"}
+
+    tc = problem.test_config
     info = {"python": sys.executable, "version": sys.version}
 
-    # Read a real file from rq-v1.0 to build test input
-    queue_path = os.path.join(RQ_SOURCE, "rq", "queue.py")
+    # Read a real file from source to build test input
+    queue_path = os.path.join(problem.source_path, "rq", "queue.py")
     if not os.path.exists(queue_path):
         info["error"] = f"queue.py not found at {queue_path}"
         return info
@@ -72,46 +78,47 @@ async def debug_test_runner():
         info["error"] = "parse_final_code returned empty"
         return info
 
-    # Step 2: copy rq-v1.0
+    # Step 2: copy source
     tmpdir = tempfile.mkdtemp(prefix="sponge_debug_")
     try:
-        rq_copy = os.path.join(tmpdir, "rq-v1.0")
-        shutil.copytree(RQ_SOURCE, rq_copy)
+        source_copy = os.path.join(tmpdir, "source")
+        shutil.copytree(problem.source_path, source_copy)
         info["copytree"] = "ok"
 
         # Step 3: write conftest
-        with open(os.path.join(tmpdir, "conftest.py"), "w") as f:
-            f.write(CONFTEST_CONTENT)
+        if tc.conftest_content:
+            with open(os.path.join(tmpdir, "conftest.py"), "w") as f:
+                f.write(tc.conftest_content)
 
         # Step 4: overlay user files
         for rel_path, content in user_files.items():
-            dest = os.path.join(rq_copy, rel_path)
+            dest = os.path.join(source_copy, rel_path)
             os.makedirs(os.path.dirname(dest), exist_ok=True)
             with open(dest, "w") as f:
                 f.write(content)
 
         # Step 5: copy test suite
         test_dest = os.path.join(tmpdir, "test_submission.py")
-        shutil.copy2(TEST_SUITE_PATH, test_dest)
+        shutil.copy2(tc.visible_test_path, test_dest)
 
         # Step 6: run pytest
         env = os.environ.copy()
-        env["RQ_CODEBASE_PATH"] = rq_copy
+        env[tc.env_var_name] = source_copy
         runtime_paths = os.pathsep.join(p for p in sys.path if p)
-        extra_paths = rq_copy + os.pathsep + os.path.join(rq_copy, "tests")
+        extra_paths = source_copy + os.pathsep + os.path.join(source_copy, "tests")
         env["PYTHONPATH"] = extra_paths + os.pathsep + runtime_paths
 
         xml_path = os.path.join(tmpdir, "results.xml")
         cmd = [
             sys.executable, "-m", "pytest", test_dest,
             f"--junitxml={xml_path}", "-q", "--no-header",
-            f"--ignore={os.path.join(rq_copy, 'tests')}",
+            f"--ignore={os.path.join(source_copy, 'tests')}",
             f"--rootdir={tmpdir}",
         ]
 
         result = subprocess.run(
             cmd, capture_output=True, text=True,
-            timeout=PYTEST_TIMEOUT, cwd=tmpdir, env=env,
+            timeout=tc.timeout_seconds, cwd=tmpdir, env=env,
         )
         info["returncode"] = result.returncode
         info["stdout_tail"] = result.stdout[-1000:] if result.stdout else ""

@@ -26,14 +26,31 @@ async function safeFetch(url, options, { endpoint, silent = false } = {}) {
   return res
 }
 
+// ─── GET /problems ──────────────────────────────────────────────────
+
+export async function fetchProblems() {
+  const res = await safeFetch(`${API_BASE}/problems`, {}, { endpoint: 'problems', silent: true })
+  return res.json()
+}
+
+export async function fetchProblemDetail(problemId) {
+  const res = await safeFetch(`${API_BASE}/problems/${problemId}`, {}, { endpoint: `problems/${problemId}`, silent: true })
+  return res.json()
+}
+
+export async function fetchProblemFiles(problemId) {
+  const res = await safeFetch(`${API_BASE}/problems/${problemId}/files`, {}, { endpoint: `problems/${problemId}/files`, silent: true })
+  return res.json()
+}
+
 // ─── POST /session/start ─────────────────────────────────────────────
 
-export async function startSession(username) {
+export async function startSession(username, problemId) {
   try {
     const res = await safeFetch(`${API_BASE}/session/start`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username }),
+      body: JSON.stringify({ username, problem_id: problemId }),
     }, { endpoint: 'session/start' })
     return res.json()
   } catch (err) {

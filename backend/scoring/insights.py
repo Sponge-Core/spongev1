@@ -442,6 +442,7 @@ async def generate_insights(
     metrics: Optional[HeadlineMetrics] = None,
     penalties: Optional[PenaltyDetail] = None,
     test_suite: Optional[TestSuiteResult] = None,
+    insights_prompt: Optional[str] = None,
 ) -> list[Insight]:
     """
     Generate personalised scoring insights via Gemini.
@@ -464,7 +465,7 @@ async def generate_insights(
             client,
             contents=[{"role": "user", "parts": [{"text": prompt}]}],
             config=types.GenerateContentConfig(
-                system_instruction=_INSIGHTS_SYSTEM_PROMPT,
+                system_instruction=insights_prompt or _INSIGHTS_SYSTEM_PROMPT,
                 max_output_tokens=1024,
                 temperature=0.4,
                 response_mime_type="application/json",
