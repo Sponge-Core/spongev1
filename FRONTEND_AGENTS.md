@@ -16,9 +16,9 @@ Two people work on the frontend. They do NOT touch each other's components.
 | `chat/ChatTerminal.jsx` | AI chat panel — message list, input bar, typing indicator |
 | `chat/ChatMessage.jsx` | Single chat message renderer (markdown, code blocks, inline code) |
 
-Also owns: `pages/SessionPage.jsx`, `pages/DemoPage.jsx`, `hooks/useSession.jsx`, `hooks/useTimer.js`, `api/client.js`, `components/game/LandingScreen.jsx`, `components/game/BriefScreen.jsx`
+Also owns: `pages/SessionPage.jsx`, `pages/DemoPage.jsx`, `pages/ProblemsPage.jsx`, `hooks/useSession.jsx`, `hooks/useTimer.js`, `api/client.js`, `components/game/LandingScreen.jsx`, `components/game/BriefScreen.jsx`
 
-> **Note on LandingScreen:** it lives in `components/game/` but is owned by **Zidan**, not Josh. It's session flow (start screen, username input, challenge cards), not game UI. Josh does not touch it.
+> **Note on LandingScreen:** it lives in `components/game/` but is owned by **Zidan**, not Josh. It's the marketing landing page (hero, CTA to `/problems`), not game UI. Josh does not touch it.
 
 ### Designer — Game Layer (`components/game/`, except LandingScreen)
 
@@ -52,7 +52,7 @@ frontend/src/
       ChatTerminal.jsx   ← placeholder hint from problemData
       ChatMessage.jsx
     game/
-      LandingScreen.jsx  ← includes Challenges section (problem cards from API)
+      LandingScreen.jsx  ← marketing hero, CTA links to /problems
       BriefScreen.jsx    ← dynamic brief from problemData
       ResultsScreen.jsx
       Leaderboard.jsx
@@ -62,6 +62,7 @@ frontend/src/
       Header.jsx         ← dynamic problem title from problemData
       Timer.jsx
   pages/
+    ProblemsPage.jsx     ← /problems — challenge catalog with cards from API
     DemoPage.jsx         ← reads problemId from URL, calls selectProblem()
     SessionPage.jsx
     LeaderboardPage.jsx
@@ -70,9 +71,9 @@ frontend/src/
   hooks/
     useSession.jsx       ← manages problemId, problemData, problemFiles state
     useTimer.js
-  App.jsx                ← route: /demo/:problemId?
+  App.jsx                ← routes: /, /problems, /demo/:problemId?
   main.jsx
-  index.css              ← includes challenge card styles
+  index.css              ← includes problems page + challenge card styles
 ```
 
 **Deprecated (no longer imported):**
@@ -235,7 +236,7 @@ All session state lives in `hooks/useSession.jsx` via React Context:
 - `results` — scoring results from submit endpoint
 - `isSubmitting` — loading state for submit
 
-**View flow:** `idle → brief → session → results`. Problem selection happens on the landing page, which navigates to `/demo/:problemId`. DemoPage calls `selectProblem()` on mount, then `beginSession()` once loaded.
+**View flow:** `idle → brief → session → results`. Problem selection happens on the `/problems` page, which navigates to `/demo/:problemId`. DemoPage calls `selectProblem()` on mount, then `beginSession()` once loaded.
 
 ## Key Implementation Notes
 
@@ -245,7 +246,8 @@ All session state lives in `hooks/useSession.jsx` via React Context:
 - The chat panel renders markdown (code blocks, inline code, bold, bullets) with a custom renderer
 - Chat placeholder hint comes from `problemData.brief.chat_placeholder_hint`
 - Events are logged to the backend via `logEvent()` for scoring analysis
-- Landing page fetches problem catalog from `GET /problems` and renders challenge cards
+- `/problems` route — dedicated page listing all challenges; fetches from `GET /problems`, renders challenge cards
+- Landing page CTA ("Browse challenges") navigates to `/problems`
 - `/demo/:problemId?` route — `problemId` param is optional, defaults to `"rq-delayed-jobs"`
 - BriefScreen and ProblemStatement render all content from `problemData.brief` (title, context, objective, requirements, constraints, footer_note)
 - Header shows `problemData.short_title` instead of hardcoded text
