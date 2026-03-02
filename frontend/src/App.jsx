@@ -13,7 +13,7 @@ export default function App() {
           <ErrorBanner />
           <Routes>
             <Route path="/" element={<LandingScreen />} />
-            <Route path="/demo" element={<DemoPage />} />
+            <Route path="/demo/:problemId?" element={<DemoPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </SessionProvider>

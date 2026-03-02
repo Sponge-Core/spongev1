@@ -12,6 +12,7 @@ def _utcnow():
 
 class Session(BaseModel):
     session_id: str
+    problem_id: str = "rq-delayed-jobs"
     username: Optional[str] = None
     started_at: datetime = Field(default_factory=_utcnow)
     completed_at: Optional[datetime] = None

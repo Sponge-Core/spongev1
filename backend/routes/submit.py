@@ -8,6 +8,7 @@ from pydantic import BaseModel
 import store
 from models.score import Score
 from models.session import Session
+from problems.registry import get_problem
 from scoring.engine import compute_score
 from scoring.semantic import evaluate_conversation
 from scoring.code_analysis import analyze_final_code
@@ -54,11 +55,17 @@ async def submit_session(body: SubmitRequest):
     if body.username:
         session.username = body.username
 
+    # Look up problem-specific prompts
+    problem = get_problem(session.problem_id)
+    eval_prompt = problem.eval_prompt if problem else None
+    code_eval_prompt = problem.code_eval_prompt if problem else None
+    insights_prompt = problem.insights_prompt if problem else None
+
     # Fire all three evals concurrently — each returns None on failure
     conv_eval, code_eval, test_results = await asyncio.gather(
-        evaluate_conversation(session.conversation_history),
-        analyze_final_code(session.final_code),
-        run_correctness_tests(session.final_code, include_hidden=True),
+        evaluate_conversation(session.conversation_history, eval_prompt=eval_prompt),
+        analyze_final_code(session.final_code, code_eval_prompt=code_eval_prompt),
+        run_correctness_tests(session.final_code, problem_id=session.problem_id, include_hidden=True),
     )
 
     score = compute_score(
@@ -82,6 +89,7 @@ async def submit_session(body: SubmitRequest):
         metrics=score.headline_metrics,
         penalties=score.penalty_detail,
         test_suite=score.test_suite,
+        insights_prompt=insights_prompt,
     )
     score.insights = insights
     score.user_prompts = user_prompts

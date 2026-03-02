@@ -13,7 +13,7 @@ export default function Header({ onTestsTriggered }) {
   const {
     timeLeft, totalTime, submit, isSubmitting,
     checkpoints, saveCheckpoint, fileBuffers, lastSavedBuffers, setShowHistory,
-    runSessionTests, isRunningTests,
+    runSessionTests, isRunningTests, problemData,
   } = useSession()
 
   const [showToast, setShowToast] = useState(false)
@@ -91,7 +91,7 @@ export default function Header({ onTestsTriggered }) {
             />
           </div>
           <span className="header-divider" />
-          <span className="header-problem-tag">Delayed Job Execution</span>
+          <span className="header-problem-tag">{problemData?.short_title || problemData?.title || 'Challenge'}</span>
         </div>
 
         <div className="header-center">

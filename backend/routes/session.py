@@ -15,6 +15,7 @@ router = APIRouter(tags=["session"])
 
 class StartSessionRequest(BaseModel):
     username: Optional[str] = None
+    problem_id: str = "rq-delayed-jobs"
 
 
 class StartSessionResponse(BaseModel):
@@ -39,7 +40,8 @@ async def start_session(body: Optional[StartSessionRequest] = Body(default=None)
     session_id = f"sponge_{uuid.uuid4().hex[:8]}"
 
     username = body.username if body else None
-    session = Session(session_id=session_id, username=username)
+    problem_id = body.problem_id if body else "rq-delayed-jobs"
+    session = Session(session_id=session_id, username=username, problem_id=problem_id)
     store.sessions[session_id] = session
 
     return StartSessionResponse(session_id=session_id)

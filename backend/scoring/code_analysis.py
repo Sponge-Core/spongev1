@@ -138,7 +138,7 @@ def _clamp(val, lo, hi) -> float:
 
 # ── Public entry point ────────────────────────────────────────────────────
 
-async def analyze_final_code(final_code: str) -> Optional[CodeSemanticEval]:
+async def analyze_final_code(final_code: str, code_eval_prompt: Optional[str] = None) -> Optional[CodeSemanticEval]:
     """
     Evaluate the submitted code via Gemini for code quality and P3 detection.
 
@@ -160,7 +160,7 @@ async def analyze_final_code(final_code: str) -> Optional[CodeSemanticEval]:
             client,
             contents=[{"role": "user", "parts": [{"text": prompt}]}],
             config=types.GenerateContentConfig(
-                system_instruction=_CODE_EVAL_SYSTEM_PROMPT,
+                system_instruction=code_eval_prompt or _CODE_EVAL_SYSTEM_PROMPT,
                 max_output_tokens=512,
                 temperature=0.2,
                 response_mime_type="application/json",

@@ -6,6 +6,7 @@ from pydantic import BaseModel
 import store
 from gemini.client import call_gemini
 from models.session import Session
+from problems.registry import get_problem
 
 router = APIRouter(tags=["prompt"])
 
@@ -46,11 +47,16 @@ async def handle_prompt(body: PromptRequest):
 
     history = [msg.model_dump() for msg in body.conversation_history]
 
+    # Look up problem-specific system prompt
+    problem = get_problem(session.problem_id)
+    system_prompt = problem.system_prompt if problem else None
+
     response_text = await call_gemini(
         prompt=body.prompt_text,
         conversation_history=history,
         active_file=body.active_file,
         file_contents=body.file_contents,
+        system_prompt=system_prompt,
     )
 
     # Persist the exchange for the scoring engine.

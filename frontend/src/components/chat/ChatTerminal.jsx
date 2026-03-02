@@ -257,7 +257,7 @@ function renderInline(text) {
 }
 
 export default function ChatTerminal({ onCollapse, hideHeader }) {
-  const { chatHistory, isAiLoading, sendChat, username, fileBuffers, updateFileContent, openFile } = useSession()
+  const { chatHistory, isAiLoading, sendChat, username, fileBuffers, updateFileContent, openFile, problemData } = useSession()
   const userInitial = username ? username[0].toUpperCase() : 'Y'
   const [input, setInput] = useState('')
   const scrollRef = useRef(null)
@@ -315,7 +315,7 @@ export default function ChatTerminal({ onCollapse, hideHeader }) {
           <div className="chat-empty">
             <p>Ask the AI for help with the implementation.</p>
             <p className="chat-empty-hint">
-              Try: "How should I approach adding delayed job execution?"
+              Try: "{problemData?.brief?.chat_placeholder_hint || problemData?.chat_hints?.[0] || 'How should I approach this problem?'}"
             </p>
           </div>
         )}

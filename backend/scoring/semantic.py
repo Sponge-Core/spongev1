@@ -232,6 +232,7 @@ def _clamp(val, lo, hi) -> float:
 
 async def evaluate_conversation(
     conversation_history: list[dict],
+    eval_prompt: Optional[str] = None,
 ) -> Optional[ConversationSemanticEval]:
     """
     Semantically evaluate the developer's conversation quality via Gemini.
@@ -256,7 +257,7 @@ async def evaluate_conversation(
             client,
             contents=[{"role": "user", "parts": [{"text": prompt}]}],
             config=types.GenerateContentConfig(
-                system_instruction=_EVAL_SYSTEM_PROMPT,
+                system_instruction=eval_prompt or _EVAL_SYSTEM_PROMPT,
                 max_output_tokens=1024,
                 temperature=0.2,
                 response_mime_type="application/json",

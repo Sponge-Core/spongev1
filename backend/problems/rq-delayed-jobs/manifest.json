@@ -1,0 +1,61 @@
+{
+  "id": "rq-delayed-jobs",
+  "version": "1.0.0",
+  "title": "Add Delayed Job Execution",
+  "short_title": "Delayed Job Execution",
+  "language": "python",
+  "difficulty": "intermediate",
+  "time_limit_seconds": 3600,
+  "description": "Extend the RQ (Redis Queue) library to support scheduling jobs for future execution.",
+  "source_dir": "source",
+  "default_active_file": "rq/job.py",
+  "file_separator_pattern": "// --- {path} ---",
+  "test_runner_config": {
+    "conftest_template": "tests/conftest_template.py",
+    "visible_test_file": "tests/test_submission.py",
+    "hidden_test_file": "tests/test_hidden.py",
+    "timeout_seconds": 45,
+    "env_var_name": "RQ_CODEBASE_PATH",
+    "extra_python_paths": ["source", "source/tests"],
+    "core_test_names": [
+      "test_enqueue_in_exists",
+      "test_enqueue_at_exists",
+      "test_existing_enqueue_unchanged"
+    ],
+    "hidden_test_names": [
+      "test_enqueue_in_negative_delay",
+      "test_scheduled_job_preserves_args_kwargs",
+      "test_rapid_successive_scheduling",
+      "test_enqueue_in_preserves_enqueue_signature",
+      "test_worker_handles_mixed_scheduled_and_regular",
+      "test_same_time_scheduling",
+      "test_scheduled_job_exception_handling",
+      "test_enqueue_at_with_echo_kwargs"
+    ],
+    "all_visible_test_names": [
+      "test_enqueue_in_exists",
+      "test_enqueue_at_exists",
+      "test_existing_enqueue_unchanged",
+      "test_enqueue_in_returns_job",
+      "test_enqueue_at_returns_job",
+      "test_scheduled_job_not_in_queue_immediately",
+      "test_scheduled_job_in_scheduled_registry",
+      "test_enqueue_at_past_datetime",
+      "test_enqueue_in_zero_delay",
+      "test_worker_moves_ready_jobs",
+      "test_multiple_scheduled_jobs_ordering",
+      "test_job_status_lifecycle"
+    ]
+  },
+  "prompts": {
+    "system": "prompts/system_prompt.txt",
+    "eval": "prompts/eval_prompt.txt",
+    "code_eval": "prompts/code_eval_prompt.txt",
+    "insights": "prompts/insights_prompt.txt"
+  },
+  "frontend": {
+    "brief": "frontend/brief.json",
+    "file_tree": "frontend/file_tree.json",
+    "chat_hints": "frontend/chat_hints.json"
+  }
+}

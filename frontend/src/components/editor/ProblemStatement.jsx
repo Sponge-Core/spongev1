@@ -1,4 +1,9 @@
+import { useSession } from '../../hooks/useSession'
+
 export default function ProblemStatement({ onCollapse }) {
+  const { problemData } = useSession()
+  const brief = problemData?.brief || {}
+
   return (
     <div className="problem-statement">
       <div className="problem-header">
@@ -17,43 +22,43 @@ export default function ProblemStatement({ onCollapse }) {
           </button>
         )}
       </div>
-      <h3 className="problem-title">Add Delayed Job Execution</h3>
+      <h3 className="problem-title">{brief.title || 'Challenge'}</h3>
 
-      <div className="problem-context">
-        <h4>Context</h4>
-        <p>
-          RQ is a Python job queue backed by Redis. Producers enqueue jobs onto named queues.
-          Workers run in separate processes — each worker continuously pulls the next available
-          job off a queue and executes it. When a job finishes or fails, it moves into a
-          registry. Right now, every enqueued job is eligible to run immediately.
-        </p>
-      </div>
+      {brief.context && (
+        <div className="problem-context">
+          <h4>Context</h4>
+          <p>{brief.context}</p>
+        </div>
+      )}
 
       <div className="problem-requirements">
         <h4>Task</h4>
-        <p>Extend RQ so jobs can be scheduled to run at a specific time in the future.</p>
-        <ul>
-          <li>
-            Add <code>enqueue_in(seconds, func, *args, **kwargs)</code> to <code>Queue</code>
-          </li>
-          <li>
-            Add <code>enqueue_at(datetime, func, *args, **kwargs)</code> to <code>Queue</code>
-          </li>
-        </ul>
+        <p>{brief.objective || ''}</p>
+        {brief.requirements?.length > 0 && (
+          <ul>
+            {brief.requirements.map((req, i) => (
+              <li key={i} dangerouslySetInnerHTML={{ __html: req }} />
+            ))}
+          </ul>
+        )}
       </div>
 
-      <div className="problem-requirements">
-        <h4>Expected Behavior</h4>
-        <ul>
-          <li>A job scheduled for time <em>T</em> must not execute before <em>T</em></li>
-          <li>A job scheduled in the past is treated as immediately ready</li>
-          <li>All existing behavior must continue to work unchanged</li>
-        </ul>
-      </div>
+      {brief.constraints?.length > 0 && (
+        <div className="problem-requirements">
+          <h4>Expected Behavior</h4>
+          <ul>
+            {brief.constraints.map((c, i) => (
+              <li key={i} dangerouslySetInnerHTML={{ __html: c }} />
+            ))}
+          </ul>
+        </div>
+      )}
 
-      <div className="problem-footer">
-        You have <strong>60 minutes</strong>. Use AI as a collaborator, not a crutch.
-      </div>
+      {brief.footer_note && (
+        <div className="problem-footer">
+          {brief.footer_note}
+        </div>
+      )}
     </div>
   )
 }

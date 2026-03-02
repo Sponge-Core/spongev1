@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import { useSession } from '../../hooks/useSession'
-import fileTree from '../../data/fileTree'
-import fileContents from '../../data/fileContents'
 
 function PythonIcon() {
   return (
@@ -113,12 +111,12 @@ function getIcon(name) {
 }
 
 function TreeNode({ node, depth = 0 }) {
-  const { openFile, activeFile } = useSession()
+  const { openFile, activeFile, fileBuffers } = useSession()
   const [expanded, setExpanded] = useState(
     node.type === 'folder' && (node.name === 'rq' || depth === 0)
   )
 
-  const hasContent = node.path && fileContents[node.path]
+  const hasContent = node.path && fileBuffers[node.path] != null
   const isActive = node.path === activeFile
 
   if (node.type === 'folder') {
@@ -171,6 +169,9 @@ function TreeNode({ node, depth = 0 }) {
 }
 
 export default function FileTree() {
+  const { problemFiles } = useSession()
+  const tree = problemFiles?.file_tree || []
+
   return (
     <div className="file-tree">
       <div className="file-tree-header">
@@ -180,7 +181,7 @@ export default function FileTree() {
         <span>Explorer</span>
       </div>
       <div className="file-tree-list">
-        {fileTree.map((node) => (
+        {tree.map((node) => (
           <TreeNode key={node.name} node={node} />
         ))}
       </div>
