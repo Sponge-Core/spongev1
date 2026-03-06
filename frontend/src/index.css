@@ -318,9 +318,9 @@ a {
 }
 
 .lp-nav-inner {
-  max-width: 1280px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 16px 40px;
+  padding: 24px 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -329,18 +329,18 @@ a {
 .lp-nav-left {
   display: flex;
   align-items: center;
-  gap: 40px;
+  gap: 32px;
 }
 
 .lp-nav-logo {
-  height: 22px;
+  height: 26px;
   width: auto;
   cursor: pointer;
 }
 
 .lp-nav-links {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .lp-nav-links button {
@@ -348,7 +348,7 @@ a {
   color: #555;
   font-size: 14px;
   font-weight: 500;
-  padding: 6px 14px;
+  padding: 8px 14px;
   border-radius: 6px;
   transition: color 0.2s, background 0.2s;
   font-family: 'Inter', sans-serif;
@@ -362,7 +362,7 @@ a {
 .lp-nav-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .lp-nav-signin {
@@ -382,10 +382,10 @@ a {
 .lp-nav-cta {
   background: #1a1a1a !important;
   color: #FAF5EF !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
   font-weight: 600 !important;
   padding: 8px 20px !important;
-  border-radius: 8px !important;
+  border-radius: 100px !important;
   height: auto !important;
   transition: background 0.2s, transform 0.15s !important;
 }
