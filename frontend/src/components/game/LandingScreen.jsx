@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import IdeMockup from '../landing/IdeMockup'
 import '@fontsource/space-grotesk/400.css'
 import '@fontsource/space-grotesk/500.css'
 import '@fontsource/space-grotesk/600.css'
@@ -13,7 +14,8 @@ const ROTATING_WORDS = [
   'ecosystem.',
   'stack.',
   'craft.',
-  'engineering.',
+  'environment.',
+  'platform.',
   'future.'
 ]
 
@@ -23,7 +25,7 @@ const COMPANIES = [
   { name: 'OpenAI', logo: '/logos/openai.svg' },
   { name: 'Shopify', logo: '/logos/shopify.svg' },
   { name: 'Nvidia', logo: '/logos/nvidia.svg' },
-  { name: 'Canva', logo: '/logos/canva.svg', imgStyle: { height: '48px', width: 'auto' } },
+  { name: 'Canva', logo: '/logos/canva.svg' },
   { name: 'Oracle', logo: '/logos/oracle.svg' },
 ]
 
@@ -96,7 +98,7 @@ export default function LandingScreen() {
       <section className="lp-hero">
         <div className="lp-hero-left">
           <h1 className="lp-hero-h1">
-            Master the{' '}
+            Master the<br />
             <span className="lp-hero-italic">
               <span style={{ whiteSpace: 'nowrap' }}>AI-native</span>{' '}
               <span className="lp-hero-typing">{text}</span>
@@ -140,9 +142,14 @@ export default function LandingScreen() {
         </div>
       </section>
 
-      {/* ─── HERO IMAGE ─── */}
+      {/* ─── PRODUCT SHOWCASE ─── */}
       <section className="lp-product-showcase">
-        <img src="/hero.png" alt="Sponge IDE Mockup" className="lp-product-image" />
+        <div className="lp-product-wrapper">
+          <img src="/hero.png" alt="" className="lp-product-bg" />
+          <div className="lp-product-overlay">
+            <IdeMockup />
+          </div>
+        </div>
       </section>
 
       {/* ─── FOOTER ─── */}
