@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchProblems } from '../api/client'
+import Navbar from '../components/shared/Navbar'
 
 const langColors = { python: '#3776AB' }
 const diffColors = { beginner: '#52b788', intermediate: '#e9c46a', advanced: '#e76f51' }
@@ -56,22 +57,13 @@ export default function ProblemsPage() {
   useEffect(() => {
     fetchProblems()
       .then(setProblems)
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false))
   }, [])
 
   return (
     <div className="problems-page">
-      <header className="problems-header">
-        <div className="problems-header-left" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          <img
-            src="/brand/logo-full.png"
-            alt="Sponge"
-            className="nav-logo-img"
-            height={20}
-          />
-        </div>
-      </header>
+      <Navbar />
 
       <main className="problems-main">
         <div className="problems-meta">
