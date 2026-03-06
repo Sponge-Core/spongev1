@@ -27,7 +27,7 @@
   /* Cream */
   --cream: #f5f0e8;
   --cream-dim: #b8b0a4;
-  --cream-faint: rgba(245, 240, 232, 0.05);
+  --cream-faint: rgba(255, 254, 242, 0.05);
 
   /* Text */
   --text: #e0ddd7;
@@ -298,7 +298,7 @@ a {
 
 .lp {
   height: 100%;
-  background: #F5F0E8;
+  background: #fffef2;
   color: #1a1a1a;
   overflow-y: auto;
   overflow-x: hidden;
@@ -311,7 +311,7 @@ a {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(245, 240, 232, 0.85);
+  background: rgba(255, 254, 242, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
@@ -381,7 +381,7 @@ a {
 
 .lp-nav-cta {
   background: #1a1a1a !important;
-  color: #F5F0E8 !important;
+  color: #fffef2 !important;
   font-size: 14px !important;
   font-weight: 600 !important;
   padding: 8px 20px !important;
@@ -472,7 +472,7 @@ a {
 
 .lp-hero-btn-primary {
   background: #1a1a1a !important;
-  color: #F5F0E8 !important;
+  color: #fffef2 !important;
   font-size: 14px !important;
   font-weight: 600 !important;
   padding: 12px 28px !important;
