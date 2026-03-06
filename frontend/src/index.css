@@ -1240,6 +1240,402 @@ a {
 }
 
 
+/* ═══════════════════════════════════════
+   FILMSTRIP DIVIDER
+   ═══════════════════════════════════════ */
+
+.lp-filmstrip {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 96px 32px 80px;
+}
+
+.lp-filmstrip-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.lp-filmstrip-label {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  color: #e0a030;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.lp-filmstrip-ticks {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 24px;
+  overflow: hidden;
+}
+
+.lp-filmstrip-tick {
+  flex: 1;
+  height: 100%;
+  border-left: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.lp-filmstrip-tick:nth-child(5n) {
+  border-left-color: rgba(0, 0, 0, 0.15);
+}
+
+/* ═══════════════════════════════════════
+   STICKY SCROLL SECTION
+   ═══════════════════════════════════════ */
+
+.lp-scroll-section {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 32px 0;
+}
+
+.lp-scroll-sticky {
+  position: sticky;
+  top: 80px;
+  display: flex;
+  gap: 64px;
+  align-items: flex-start;
+  min-height: 60vh;
+  padding-bottom: 40px;
+}
+
+.lp-scroll-left {
+  flex: 0 0 420px;
+  max-width: 420px;
+}
+
+.lp-scroll-heading {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #1a1a1a;
+  margin-bottom: 48px;
+}
+
+.lp-scroll-heading-accent {
+  font-family: 'Newsreader', serif;
+  font-style: italic;
+  font-weight: 400;
+  text-decoration: line-through;
+  text-decoration-color: rgba(0, 0, 0, 0.2);
+  text-decoration-thickness: 1.5px;
+}
+
+.lp-scroll-items {
+  display: flex;
+  gap: 20px;
+}
+
+.lp-scroll-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 6px;
+  flex-shrink: 0;
+  width: 16px;
+}
+
+.lp-scroll-progress-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transition: background 0.4s ease;
+  flex-shrink: 0;
+}
+
+.lp-scroll-progress-line {
+  flex: 1;
+  width: 2px;
+  background: #e0e0e0;
+  border-radius: 1px;
+  margin: 6px 0;
+  position: relative;
+  overflow: hidden;
+  min-height: 120px;
+}
+
+.lp-scroll-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #e0a030;
+  border-radius: 1px;
+  transition: height 0.5s ease;
+}
+
+.lp-scroll-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.lp-scroll-item {
+  padding: 12px 0;
+  cursor: default;
+}
+
+.lp-scroll-item-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #999;
+  transition: color 0.3s ease;
+}
+
+.lp-scroll-item--active .lp-scroll-item-title {
+  color: #1a1a1a;
+}
+
+.lp-scroll-item-desc {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #666;
+  margin-top: 8px;
+  animation: lp-fade-in 0.4s ease;
+}
+
+@keyframes lp-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Right side visual */
+.lp-scroll-right {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 20px;
+}
+
+.lp-scroll-visual {
+  width: 100%;
+  animation: lp-visual-enter 0.5s ease;
+}
+
+@keyframes lp-visual-enter {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.lp-scroll-fig-label {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  color: #999;
+  letter-spacing: 0.08em;
+  text-align: right;
+  margin-bottom: 12px;
+}
+
+.lp-scroll-placeholder {
+  background: #f0ece2;
+  border-radius: 16px;
+  padding: 64px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  min-height: 360px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.lp-scroll-placeholder-icon {
+  opacity: 0.7;
+}
+
+.lp-scroll-placeholder-label {
+  font-size: 13px;
+  color: #999;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Invisible scroll triggers — they create the scroll distance */
+.lp-scroll-triggers {
+  position: relative;
+  pointer-events: none;
+}
+
+.lp-scroll-trigger {
+  height: 70vh;
+}
+
+/* ═══════════════════════════════════════
+   FEATURES SECTION
+   ═══════════════════════════════════════ */
+
+.lp-features {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 100px 32px 80px;
+}
+
+.lp-features-header {
+  margin-bottom: 48px;
+}
+
+.lp-features-badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: #e0a030;
+  margin-bottom: 16px;
+}
+
+.lp-features-badge::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #e0a030;
+  border-radius: 2px;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.lp-features-heading {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+
+.lp-features-heading-accent {
+  font-family: 'Newsreader', serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.lp-features-subtext {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #666;
+  max-width: 560px;
+}
+
+.lp-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.lp-feature-card {
+  background: #ece8de;
+  border-radius: 12px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 160px;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lp-feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.08);
+}
+
+.lp-feature-icon {
+  font-size: 24px;
+  margin-bottom: auto;
+  opacity: 0.6;
+}
+
+.lp-feature-label {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+  letter-spacing: 0.08em;
+  margin-top: 24px;
+}
+
+.lp-feature-num {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  color: #999;
+  letter-spacing: 0.06em;
+  position: absolute;
+  bottom: 12px;
+  left: 28px;
+}
+
+/* ═══════════════════════════════════════
+   CTA SECTION
+   ═══════════════════════════════════════ */
+
+.lp-cta {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 32px 0;
+}
+
+.lp-cta-inner {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  margin-bottom: 48px;
+}
+
+.lp-cta-heading {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #1a1a1a;
+  flex: 1;
+  min-width: 320px;
+}
+
+.lp-cta-accent {
+  color: #e0a030;
+  font-family: 'Newsreader', serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.lp-cta-desc {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #666;
+  max-width: 340px;
+}
+
+.lp-cta-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.lp-cta-image {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: -4px;
+}
+
+.lp-cta-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 /* ── Footer ── */
 .lp-footer {
   padding: 40px;
@@ -1323,6 +1719,65 @@ a {
 
   .lp-nav-links {
     display: none;
+  }
+
+  .lp-scroll-sticky {
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .lp-scroll-left {
+    flex: none;
+    max-width: 100%;
+  }
+
+  .lp-scroll-heading {
+    font-size: 32px;
+  }
+
+  .lp-scroll-triggers {
+    display: none;
+  }
+
+  .lp-scroll-section {
+    padding: 60px 24px 0;
+  }
+
+  .lp-scroll-sticky {
+    position: relative;
+    top: auto;
+  }
+
+  .lp-scroll-item-desc {
+    display: block;
+  }
+
+  .lp-scroll-item-title {
+    color: #1a1a1a;
+  }
+
+  .lp-features {
+    padding: 60px 24px 60px;
+  }
+
+  .lp-features-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lp-features-heading {
+    font-size: 32px;
+  }
+
+  .lp-cta {
+    padding: 60px 24px 0;
+  }
+
+  .lp-cta-heading {
+    font-size: 36px;
+  }
+
+  .lp-filmstrip {
+    padding: 32px 24px 0;
   }
 }
 
