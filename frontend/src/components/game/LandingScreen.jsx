@@ -140,11 +140,9 @@ export default function LandingScreen() {
         </div>
       </section>
 
-      {/* ─── HERO IMAGE PLACEHOLDER ─── */}
+      {/* ─── HERO IMAGE ─── */}
       <section className="lp-product-showcase">
-        <div className="lp-product-placeholder">
-          <span className="lp-product-placeholder-text">Product showcase area</span>
-        </div>
+        <img src="/hero.png" alt="Sponge IDE Mockup" className="lp-product-image" />
       </section>
 
       {/* ─── FOOTER ─── */}
