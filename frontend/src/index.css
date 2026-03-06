@@ -1246,8 +1246,12 @@ a {
 
 .lp-filmstrip {
   max-width: 1200px;
-  margin: 0 auto;
-  padding: 96px 32px 80px;
+  margin: 96px auto 0;
+  padding: 0 32px;
+  position: sticky;
+  top: 72px;
+  z-index: 5;
+  background: #faf6ef;
 }
 
 .lp-filmstrip-bar {
@@ -1293,12 +1297,12 @@ a {
   position: relative;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 80px 32px 0;
+  padding: 40px 32px 0;
 }
 
 .lp-scroll-sticky {
   position: sticky;
-  top: 80px;
+  top: 140px;
   display: flex;
   gap: 64px;
   align-items: flex-start;
