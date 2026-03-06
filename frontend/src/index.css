@@ -6,11 +6,11 @@
 
 :root {
   /* Base */
-  --bg-root: #0a0a0a;
-  --bg-surface: #111111;
-  --bg-surface-2: #1a1a1a;
-  --bg-surface-3: #1e1e1e;
-  --bg-hover: #252525;
+  --bg-root: #121316;
+  --bg-surface: #191a1f;
+  --bg-surface-2: #212329;
+  --bg-surface-3: #2a2c33;
+  --bg-hover: #2f313a;
 
   /* Borders */
   --border: oklch(0.922 0 0);
