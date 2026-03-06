@@ -98,7 +98,7 @@ export default function LandingScreen() {
           <h1 className="lp-hero-h1">
             Master the{' '}
             <span className="lp-hero-italic">
-              AI-native{' '}
+              <span style={{ whiteSpace: 'nowrap' }}>AI-native</span>{' '}
               <span className="lp-hero-typing">{text}</span>
               <span className="lp-hero-cursor">|</span>
             </span>
