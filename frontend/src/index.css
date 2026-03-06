@@ -172,15 +172,15 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 24px 48px;
+  padding: 24px 32px;
 }
 
 .site-navbar-left {
   display: flex;
   align-items: center;
-  gap: 64px;
+  gap: 32px;
 }
 
 .site-navbar-logo {
@@ -298,7 +298,7 @@ a {
 
 .lp {
   height: 100%;
-  background: #F9F6F0;
+  background: #F5F0E8;
   color: #1a1a1a;
   overflow-y: auto;
   overflow-x: hidden;
@@ -311,16 +311,16 @@ a {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(249, 246, 240, 0.85);
+  background: rgba(245, 240, 232, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .lp-nav-inner {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 24px 48px;
+  padding: 24px 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -329,7 +329,7 @@ a {
 .lp-nav-left {
   display: flex;
   align-items: center;
-  gap: 64px;
+  gap: 32px;
 }
 
 .lp-nav-logo {
@@ -381,7 +381,7 @@ a {
 
 .lp-nav-cta {
   background: #1a1a1a !important;
-  color: #FAF5EF !important;
+  color: #F5F0E8 !important;
   font-size: 14px !important;
   font-weight: 600 !important;
   padding: 8px 20px !important;
@@ -397,9 +397,9 @@ a {
 
 /* ── Hero ── */
 .lp-hero {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 120px 48px 80px;
+  padding: 80px 32px 60px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -472,7 +472,7 @@ a {
 
 .lp-hero-btn-primary {
   background: #1a1a1a !important;
-  color: #FAF5EF !important;
+  color: #F5F0E8 !important;
   font-size: 14px !important;
   font-weight: 600 !important;
   padding: 12px 28px !important;
@@ -505,9 +505,9 @@ a {
 
 /* ── Social Proof / Logo Marquee ── */
 .lp-logos {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 48px 60px;
+  padding: 0 32px 60px;
   display: flex;
   align-items: center;
   gap: 40px;
@@ -571,17 +571,14 @@ a {
 
 /* ── Product Showcase Placeholder ── */
 .lp-product-showcase {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 48px 80px;
+  width: 100%;
+  padding: 0 0 80px;
 }
 
 .lp-product-placeholder {
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: 16px;
-  background: #eee8de;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: #eae4da;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -590,7 +587,7 @@ a {
 
 .lp-product-placeholder-text {
   font-size: 14px;
-  color: #bbb;
+  color: #c5bfb5;
   font-weight: 500;
   letter-spacing: 0.02em;
 }
@@ -602,7 +599,7 @@ a {
 }
 
 .lp-footer-inner {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   align-items: center;
